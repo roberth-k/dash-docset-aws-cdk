@@ -10,7 +10,7 @@ from typing import Set, Optional
 from urllib.parse import urljoin
 
 import requests
-from bs4 import BeautifulSoup
+import bs4
 
 BASE_URL = 'https://docs.aws.amazon.com'
 _cchardet = cchardet  # Prevent optimizer from removing the import.
@@ -32,7 +32,7 @@ def get_url(path: str) -> bytes:
 
 def list_toc() -> Set[str]:
     page = get_url('/cdk/api/v2/docs/aws-construct-library.html').decode('utf8')
-    soup = BeautifulSoup(page, 'lxml')
+    soup = bs4.BeautifulSoup(page, 'lxml')
     return {a['href'] for a in soup.select('a.navItem')}
 
 
@@ -67,7 +67,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     print(str(docset_path))
     page = get_url(page_path).decode('utf8')
 
-    soup = BeautifulSoup(page, 'lxml')
+    soup = bs4.BeautifulSoup(page, 'lxml')
 
     for script in soup.select('script'):
         script.decompose()
@@ -95,7 +95,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
             if elem[attr].startswith('/'):
                 elem[attr] = os_path.relpath(elem[attr], os_path.dirname(page_path))
 
-    page = str(soup)
+    soup.select_one('html').insert(0, bs4.Comment(f'Online page at {urljoin(BASE_URL, page_path)}'))
 
     page_title = (soup.select_one('header h1') or soup.select_one('article h1')).text
     entry_type = get_entry_type(page_title)
@@ -107,7 +107,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
 
     os.makedirs(os_path.dirname(docset_path), exist_ok=True)
     with open(docset_path, 'w') as fp:
-        fp.write(page)
+        fp.write(str(soup))
 
     return Entry(
         name=entry_title,
