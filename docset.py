@@ -7,7 +7,7 @@ import os.path as os_path
 import sqlite3
 from multiprocessing import Pool
 from typing import Set, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote as url_quote
 
 import requests
 import bs4
@@ -94,6 +94,13 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
         for elem in soup.select(selector):
             if elem[attr].startswith('/'):
                 elem[attr] = os_path.relpath(elem[attr], os_path.dirname(page_path))
+
+    # Set up the Dash Table of Contents.
+    for selector in ['h2', 'h3', 'h4', 'h5', 'h6']:
+        for elem in soup.select(selector):
+            elem.select_one('a.hash-link').decompose()
+            elem.select_one('a')['name'] = '//apple_ref/cpp/Section/' + url_quote(elem.text)
+            elem.select_one('a')['class'] += ['dashAnchor']
 
     soup.select_one('html').insert(0, bs4.Comment(f'Online page at {urljoin(BASE_URL, page_path)}'))
 
