@@ -80,6 +80,11 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     soup.select_one('.docs-prevnext').decompose()
     soup.select_one('nav.onPageNav').decompose()
     soup.select_one('footer').decompose()
+    soup.select_one('h1')['style'] = 'margin: 10px 0;'  # Remove whitespace around page title.
+
+    if soup.select_one('header.postHeader').text == '':
+        # Remove whitespace that occurs in regular reference pages.
+        soup.select_one('header.postHeader').decompose()
 
     # Convert all absolute links to relative ones.
     for selector, attr in [
