@@ -1,6 +1,7 @@
 SHELL 			:= /usr/bin/env bash
 .DEFAULT_GOAL 	:= docset
 export PATH 	:= $(shell pwd)/scripts:$(shell pwd)/.venv/bin:$(PATH)
+MAKEFLAGS		:= --no-print-directory
 
 BUILD	:= .build/docset
 DOCSET 	:= $(BUILD)/AWS-CDK.docset
