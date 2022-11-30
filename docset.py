@@ -65,6 +65,46 @@ def should_skip(docset_path: str) -> bool:
     return False
 
 
+TABLE_OF_CONTENTS_MAPPING = [
+    ('h2', None, None, 'Section'),
+    ('h3', 'h2', 'Construct Props', 'Attribute'),
+    ('h3', 'h2', 'Methods', 'Method'),
+    ('h3', 'h2', 'Properties', 'Property'),
+    ('h3', 'h2', 'Members', 'Value'),
+    ('h3', None, None, 'Guide'),
+    ('h4', None, None, 'Guide'),
+    ('h5', None, None, 'Guide'),
+    ('h6', None, None, 'Guide'),
+]
+
+
+def add_table_of_contents(soup: bs4.BeautifulSoup):
+    memory = {}
+
+    def set_entry_type(elem, entry_type):
+        #  All headers should already have an internal anchor point.
+        a = elem.select_one('a')
+        a['name'] = f'//apple_ref/cpp/{entry_type}/{url_quote(elem.text)}'
+        if 'class' not in elem:
+            a['class'] = []
+        a['class'] += ['dashAnchor']
+
+    for elem in soup.select_one('article > div > span').children:
+        for this_tag, last_sibling_tag, last_sibling_text, toc_entry_type in TABLE_OF_CONTENTS_MAPPING:
+            if elem.name != this_tag:
+                continue
+
+            if last_sibling_tag is None:
+                set_entry_type(elem, toc_entry_type)
+                break
+
+            if memory.get(last_sibling_tag) == last_sibling_text:
+                set_entry_type(elem, toc_entry_type)
+                break
+
+        memory[elem.name] = elem.text
+
+
 def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     docset_path = os_path.join(documents_path, page_path.lstrip('/'))
 
@@ -93,6 +133,9 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
         # Remove whitespace that occurs in regular reference pages.
         soup.select_one('header.postHeader').decompose()
 
+    for a in soup.select('a.hash-link'):
+        a.decompose()
+
     # Convert all absolute links to relative ones.
     for selector, attr in [
         ('[href]', 'href'),
@@ -109,12 +152,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
                 # External pages.
                 elem[attr] = urljoin(BASE_URL, elem[attr])
 
-    # Set up the Dash Table of Contents.
-    for selector in ['h2', 'h3', 'h4', 'h5', 'h6']:
-        for elem in soup.select(selector):
-            elem.select_one('a.hash-link').decompose()
-            elem.select_one('a')['name'] = '//apple_ref/cpp/Section/' + url_quote(elem.text)
-            elem.select_one('a')['class'] += ['dashAnchor']
+    add_table_of_contents(soup)
 
     soup.select_one('html').insert(0, bs4.Comment(f'Online page at {urljoin(BASE_URL, page_path)}'))
 
