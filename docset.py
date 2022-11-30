@@ -1,5 +1,7 @@
 import argparse
 import dataclasses
+
+import cchardet
 import os
 import os.path as os_path
 import sqlite3
@@ -11,6 +13,8 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = 'https://docs.aws.amazon.com'
+_cchardet = cchardet  # Prevent optimizer from removing the import.
+requests_session = requests.Session()
 
 
 @dataclasses.dataclass
@@ -21,14 +25,14 @@ class Entry:
 
 
 def get_page(path: str) -> str:
-    response = requests.get(urljoin(BASE_URL, path))
+    response = requests_session.get(urljoin(BASE_URL, path))
     response.raise_for_status()
     return response.text
 
 
 def list_toc() -> Set[str]:
     page = get_page('/cdk/api/v2/docs/aws-construct-library.html')
-    soup = BeautifulSoup(page, 'html5lib')
+    soup = BeautifulSoup(page, 'lxml')
     return {a['href'] for a in soup.select('a.navItem')}
 
 
@@ -63,7 +67,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     print(str(docset_path))
     page = get_page(page_path)
 
-    soup = BeautifulSoup(page, 'html5lib')
+    soup = BeautifulSoup(page, 'lxml')
 
     for script in soup.select('script'):
         script.decompose()
