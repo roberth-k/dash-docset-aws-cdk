@@ -24,14 +24,14 @@ class Entry:
     relative_path: str
 
 
-def get_page(path: str) -> str:
+def get_url(path: str) -> bytes:
     response = requests_session.get(urljoin(BASE_URL, path))
     response.raise_for_status()
-    return response.text
+    return response.content
 
 
 def list_toc() -> Set[str]:
-    page = get_page('/cdk/api/v2/docs/aws-construct-library.html')
+    page = get_url('/cdk/api/v2/docs/aws-construct-library.html').decode('utf8')
     soup = BeautifulSoup(page, 'lxml')
     return {a['href'] for a in soup.select('a.navItem')}
 
@@ -65,7 +65,7 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
         return None
 
     print(str(docset_path))
-    page = get_page(page_path)
+    page = get_url(page_path).decode('utf8')
 
     soup = BeautifulSoup(page, 'lxml')
 
@@ -80,10 +80,6 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     soup.select_one('.docs-prevnext').decompose()
     soup.select_one('nav.onPageNav').decompose()
     soup.select_one('footer').decompose()
-
-    # The default symbol for "Experimental" doesn't render well, so use our own.
-    for elem in soup.select('.api-icon-experimental'):
-        elem.string = 'Ⓔ'
 
     # Convert all absolute links to relative ones.
     for selector, attr in [
@@ -123,8 +119,9 @@ def copy_file(documents_path, file_path: str):
 
     os.makedirs(os_path.dirname(docset_path), exist_ok=True)
 
-    data = get_page(file_path)
-    with open(docset_path, 'w') as fp:
+    data = get_url(file_path)
+
+    with open(docset_path, 'wb') as fp:
         fp.write(data)
 
 
