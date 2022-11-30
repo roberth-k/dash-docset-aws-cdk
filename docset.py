@@ -99,8 +99,12 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
         ('img', 'src'),
     ]:
         for elem in soup.select(selector):
-            if elem[attr].startswith('/'):
+            if elem[attr].startswith('/cdk/api/v2/docs/'):
+                # Pages indexed in the docset must be linked using relative URL-s.
                 elem[attr] = os_path.relpath(elem[attr], os_path.dirname(page_path))
+            else:
+                # External pages.
+                elem[attr] = urljoin(BASE_URL, elem[attr])
 
     # Set up the Dash Table of Contents.
     for selector in ['h2', 'h3', 'h4', 'h5', 'h6']:
