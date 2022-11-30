@@ -36,12 +36,22 @@ $(STATIC_FILES): $(DOCSET)/%:  static/%
 	cp $< $@
 
 $(BUILD)/.done-make-html:
-	mkdir -p $(DOCSET)/Contents/Resources/Documents
+	@$(eval $@_VERSION_AT_START := $(shell $(MAKE) get-current-online-version))
+	@mkdir -p $(DOCSET)/Contents/Resources/Documents
 	./scripts/build-docset.py \
 		--index $(DOCSET)/Contents/Resources/docSet.dsidx \
 		--documents $(DOCSET)/Contents/Resources/Documents
+	@$(eval $@_VERSION_AT_END := $(shell $(MAKE) get-current-online-version))
+	@if [[ "$($@_VERSION_AT_START))" != "$($@_VERSION_AT_END))" ]]; then \
+		1>&2 echo "Version mismatch! Started with $($@_VERSION_AT_START), and ended with $($@_VERSION_AT_END)."; \
+		exit 1; \
+	fi
 	touch $(DOCSET)/.done-make-html
 
 $(TGZ):
 	cd $(dir $@) \
 	&& tar --exclude='.DS_Store' -czf $(notdir $@) $(patsubst %.tgz,%.docset,$(notdir $@))
+
+.PHONY: get-current-online-version
+get-current-online-version:
+	@./scripts/get-current-online-version.py
