@@ -104,11 +104,18 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
 
     soup.select_one('html').insert(0, bs4.Comment(f'Online page at {urljoin(BASE_URL, page_path)}'))
 
-    page_title = (soup.select_one('header h1') or soup.select_one('article h1')).text
+    page_title = soup.select_one('h1').text
     entry_type = get_entry_type(page_title)
 
     if entry_type in ['Class', 'Interface', 'Enum']:
         entry_title = page_path.split('/')[-1].removesuffix('.html')
+        bookmark = soup.new_tag('span')
+        bookmark.string = entry_title
+        soup.select_one('h1').parent.insert(0, bookmark)
+        entry_title = entry_title.removeprefix('aws-cdk-lib.').removeprefix('@aws-cdk_')
+    elif entry_type in ['Module']:
+        entry_title = page_title.removesuffix(' module')
+        entry_title = entry_title.removeprefix('aws-cdk-lib.').removeprefix('@aws-cdk/')
     else:
         entry_title = page_title
 
