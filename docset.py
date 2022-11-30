@@ -102,6 +102,9 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
             if elem[attr].startswith('/cdk/api/v2/docs/'):
                 # Pages indexed in the docset must be linked using relative URL-s.
                 elem[attr] = os_path.relpath(elem[attr], os_path.dirname(page_path))
+            elif '/' not in elem[attr]:
+                # Sometimes the links are already relative -- don't touch them.
+                pass
             else:
                 # External pages.
                 elem[attr] = urljoin(BASE_URL, elem[attr])
