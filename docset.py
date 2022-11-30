@@ -36,16 +36,23 @@ def list_toc() -> Set[str]:
     return {a['href'] for a in soup.select('a.navItem')}
 
 
-ENTRY_TYPE_MAPPING = {
+ENTRY_TYPE_PREFIX_MAPPING = {
     'class': 'Class',
     'interface': 'Interface',
     'enum': 'Enum',
 }
 
+ENTRY_TYPE_SUFFIX_MAPPING = {
+    'module': 'Module',
+}
+
 
 def get_entry_type(title: str, default: str = 'Guide') -> str:
-    first_word = title.split(' ')[0]
-    return ENTRY_TYPE_MAPPING.get(first_word.lower().strip(), default)
+    return (
+        ENTRY_TYPE_PREFIX_MAPPING.get(title.split(' ')[0].lower().strip())
+        or ENTRY_TYPE_SUFFIX_MAPPING.get(title.split(' ')[-1].lower().strip())
+        or default
+    )
 
 
 def should_skip(docset_path: str) -> bool:
