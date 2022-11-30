@@ -79,14 +79,14 @@ def process_page(documents_path: str, page_path: str) -> Optional[Entry]:
     for script in soup.select('script'):
         script.decompose()
 
-    soup.select_one('.fixedHeaderContainer').decompose()
-    soup.select_one('.navPusher')['style'] = 'padding-top: 0;'
-    soup.select_one('.docMainWrapper')['style'] = 'max-width: 100%; margin: 0;'
-    soup.select_one('.docsNavContainer').decompose()
-    soup.select_one('.mainContainer > .wrapper')['style'] = 'max-width: 100%; margin: 0;'
-    soup.select_one('.docs-prevnext').decompose()
-    soup.select_one('nav.onPageNav').decompose()
-    soup.select_one('footer').decompose()
+    soup.select_one('.fixedHeaderContainer').decompose()  # Remove blue bar at the top.
+    soup.select_one('.navPusher')['style'] = 'padding-top: 0;'  # Remove spacing that accommodated for the bue bar.
+    soup.select_one('.docMainWrapper')['style'] = 'max-width: 100%; margin: 0;'  # Remove horizontal whitespace.
+    soup.select_one('.docsNavContainer').decompose()  # Remove navigation column on the left.
+    soup.select_one('.mainContainer > .wrapper')['style'] = 'max-width: 100%; margin: 0;'  # Remove horizontal whitespace.
+    soup.select_one('.docs-prevnext').decompose()  # Remove Prev/Next navigation buttons.
+    soup.select_one('nav.onPageNav').decompose()  # Remove on-page navigation column.
+    soup.select_one('footer').decompose()  # Remove footer.
     soup.select_one('h1')['style'] = 'margin: 10px 0;'  # Remove whitespace around page title.
 
     if soup.select_one('header.postHeader').text == '':
