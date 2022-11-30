@@ -37,7 +37,7 @@ $(STATIC_FILES): $(DOCSET)/%:  static/%
 
 $(BUILD)/.done-make-html:
 	mkdir -p $(DOCSET)/Contents/Resources/Documents
-	python docset.py \
+	./scripts/build-docset.py \
 		--index $(DOCSET)/Contents/Resources/docSet.dsidx \
 		--documents $(DOCSET)/Contents/Resources/Documents
 	touch $(DOCSET)/.done-make-html
