@@ -2,6 +2,9 @@ name: Build
 
 on:
   push: {}
+  workflow_call:
+    outputs:
+      run_id: ${{ github.run_id }}
 
 jobs:
   build:

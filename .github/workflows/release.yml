@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: |
+          gh run download \
+            --repo=$GITHUB_ACTION_REPOSITORY \
+            ${{ jobs.build.outputs.run_id }} \
+            --name AWS-CDK.tgz
+      - run: |
+          tar \
+            --extract \
+            --file=AWS-CDK.tgz \
+            --strip-components=4 \
+            AWS-CDK.docset/Contents/Resources/Documents/cdk-version
+      - run: |
+          tag="v$(cat cdk-version)-$(date +%s)"
+          gh release create \
+            --repo=$GITHUB_ACTION_REPOSITORY \
+            --target=$GITHUB_SHA \
+            --title=$tag \
+            --notes="CDK $(cat cdk-version)" \
+            --latest \
+            "$tag" \
+            AWS-CDK.tgz
