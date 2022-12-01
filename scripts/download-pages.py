@@ -39,6 +39,15 @@ def main():
     files.add('/cdk/api/v2/img/java32.png')
     files.add('/cdk/api/v2/img/python32.png')
     files.add('/cdk/api/v2/img/typescript32.png')
+    files.add('/cdk/api/v2/img/favicon-32x32.png')
+    files.add('/cdk/api/v2/img/cdk--constructs-experimental-important.svg')
+    files.add('/cdk/api/v2/img/experimental-important.svg')
+    files.add('/cdk/api/v2/img/cdk--constructs-developer--preview-informational.svg')
+    files.add('/cdk/api/v2/img/cdk--constructs-stable-success.svg')
+    files.add('/cdk/api/v2/img/jsconstructs.svg')
+    files.add('/cdk/api/v2/img/pyconstructs.svg')
+    files.add('/cdk/api/v2/img/nuconstructs.svg')
+    files.add('/cdk/api/v2/img/maven-badge.svg')
 
     with ThreadPool(processes=os.cpu_count()*4) as thread_pool:
         thread_pool.map(functools.partial(download, target_dir=args.target_dir), files)
