@@ -9,9 +9,8 @@ on:
         default: false
         type: boolean
         description: |
-          Set this to create a new release even if
-          there is one already for the current version
-          of the CDK.
+          Create a new release even if one already
+          exists for the current version of the CDK.
 
 jobs:
   should-publish:
