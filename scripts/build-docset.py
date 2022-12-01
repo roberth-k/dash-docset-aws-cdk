@@ -80,22 +80,6 @@ def rewrite_links(soup: bs4.BeautifulSoup, relative_path: str):
                 elem[attr] = urljoin(util.BASE_URL, elem[attr])
 
 
-def get_entry_title(page_title: str, entry_type: str, relative_path: str) -> str:
-    if entry_type in ['Class', 'Interface', 'Enum']:
-        return relative_path \
-            .split('/')[-1] \
-            .removesuffix('.html') \
-            .removeprefix('aws-cdk-lib.') \
-            .removeprefix('@aws-cdk_')
-    elif entry_type in ['Module']:
-        return page_title \
-            .removesuffix(' module') \
-            .removeprefix('aws-cdk-lib.') \
-            .removeprefix('@aws-cdk/')
-    else:
-        return page_title
-
-
 def copy_asset(source_dir: str, target_dir: str, link: str):
     source_path = os.path.join(source_dir, link.lstrip('/'))
     target_path = os.path.join(target_dir, link.lstrip('/'))
@@ -160,7 +144,7 @@ def render_page(source_path: str, source_dir: str, target_dir: str, expect_versi
     page_title = soup.select_one('h1').text
     entry_type = util.get_entry_type(page_title)
 
-    entry_title = get_entry_title(page_title, entry_type, relative_path)
+    entry_title = util.get_entry_title(page_title, entry_type, relative_path)
 
     # Adds the fully qualified name of this object to the top of the page.
     bookmark = soup.new_tag('span')

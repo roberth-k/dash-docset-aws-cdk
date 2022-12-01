@@ -25,8 +25,12 @@ def load_bs4(data) -> bs4.BeautifulSoup:
     return bs4.BeautifulSoup(data, 'lxml')
 
 
+def normalize_page_title(title: str) -> str:
+    return ''.join(c for c in title.lower() if c.isalnum() or c == ' ').strip()
+
+
 def get_entry_type(title: str) -> str:
-    title = ''.join(c for c in title.lower() if c.isalnum() or c == ' ').strip()
+    title = normalize_page_title(title)
     first_word = title.split(' ')[0]
     last_word = title.split(' ')[-1]
 
@@ -51,3 +55,23 @@ def get_entry_type(title: str) -> str:
             return 'Struct'
         case _:
             return 'Guide'
+
+
+def get_entry_title(page_title: str, entry_type: str, relative_path: str) -> str:
+    page_title = page_title.strip()
+
+    match entry_type:
+        case 'Guide':
+            return page_title
+        case 'Module':
+            return page_title \
+                .removesuffix(' module') \
+                .removeprefix('@aws-cdk/') \
+                .removeprefix('aws-cdk-lib.')
+        case _:
+            return relative_path \
+                .split('/')[-1] \
+                .removesuffix('.html') \
+                .removeprefix('@aws-cdk_aws-') \
+                .removeprefix('aws-cdk-lib.aws_') \
+                .replace('.', ' ', 1)
