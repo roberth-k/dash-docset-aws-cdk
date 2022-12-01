@@ -15,7 +15,7 @@ on:
       build_docset:
         default: false
         type: boolean
-        description: When checked, build the docset after running tests.
+        description: Build the docset after running tests.
 
 jobs:
   test:
