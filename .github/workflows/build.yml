@@ -31,10 +31,8 @@ jobs:
 
   build:
     if: |
-      success() && (
-        github.event_name == 'workflow_call' ||
-        inputs.build_docset == 'true'
-      )
+      (github.event.inputs.build_docset == '') ||
+      (github.event.inputs.build_docset == true)
     name: Build
     runs-on: ubuntu-22.04
     needs: test
