@@ -42,18 +42,16 @@ $(STATIC_FILES): $(DOCSET)/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-$(BUILD)/.done-make-html:
-	@$(eval $@_VERSION_AT_START := $(shell $(MAKE) get-current-online-version))
-	@mkdir -p $(DOCSET)/Contents/Resources/Documents
+PNG_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.png'))
+CSS_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.css'))
+
+$(DOCSET)/.done: $(SRC)/.done $(PNG_TARGETS) $(CSS_TARGETS) $(DOCUMENTS)/cdk-version
+	@mkdir -p $(DOCUMENTS)
 	./scripts/build-docset.py \
-		--index $(DOCSET)/Contents/Resources/docSet.dsidx \
-		--documents $(DOCSET)/Contents/Resources/Documents
-	@$(eval $@_VERSION_AT_END := $(shell $(MAKE) get-current-online-version))
-	@if [[ "$($@_VERSION_AT_START))" != "$($@_VERSION_AT_END))" ]]; then \
-		1>&2 echo "Version mismatch! Started with $($@_VERSION_AT_START), and ended with $($@_VERSION_AT_END)."; \
-		exit 1; \
-	fi
-	touch $(DOCSET)/.done-make-html
+		--source-dir $(SRC) \
+		--target-dir $(DOCUMENTS) \
+		--index $(DOCSET)/Contents/Resources/docSet.dsidx
+	@touch $@
 
 $(TGZ):
 	cd $(dir $@) \
@@ -69,3 +67,15 @@ $(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version
 $(BUILD)/cdk-version:
 	@mkdir -p $(dir $@)
 	./scripts/get-current-online-version.py > $@
+
+$(DOCUMENTS)/%.png: $(SRC)/%.png
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(DOCUMENTS)/%.css: $(SRC)/%.css
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(DOCUMENTS)/cdk-version: $(BUILD)/cdk-version
+	@mkdir -p $(dir $@)
+	cp $< $@
