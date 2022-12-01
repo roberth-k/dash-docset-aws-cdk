@@ -42,10 +42,11 @@ $(STATIC_FILES): $(DOCSET)/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-PNG_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.png'))
-CSS_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.css'))
-
-$(DOCSET)/.done: $(SRC)/.done $(PNG_TARGETS) $(CSS_TARGETS) $(DOCUMENTS)/cdk-version .build/.done-requirements
+$(DOCSET)/.done: 	$(SRC)/.done \
+					$(DOCUMENTS)/cdk-version \
+					./scripts/build-docset.py \
+					$(STATIC_TARGETS) \
+					venv
 	@mkdir -p $(DOCUMENTS)
 	./scripts/build-docset.py \
 		--source-dir $(SRC) \

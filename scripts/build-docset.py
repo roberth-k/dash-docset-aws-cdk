@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import shutil
 from multiprocessing import Pool
 
 import argparse
@@ -95,6 +96,22 @@ def get_entry_title(page_title: str, entry_type: str, relative_path: str) -> str
         return page_title
 
 
+def copy_asset(source_dir: str, target_dir: str, link: str):
+    source_path = os.path.join(source_dir, link.lstrip('/'))
+    target_path = os.path.join(target_dir, link.lstrip('/'))
+
+    if os.path.exists(target_path):
+        return
+
+    if not os.path.exists(source_path):
+        raise RuntimeError(f'Asset {link} not found!')
+
+    if not os.path.exists((d := os.path.dirname(target_path))):
+        os.makedirs(d, exist_ok=True)
+
+    shutil.copy(source_path, target_path)
+
+
 def render_page(source_path: str, source_dir: str, target_dir: str, expect_version: str) -> Optional[Entry]:
     relative_path = os.path.relpath(source_path, start=source_dir)
     target_path = os.path.join(target_dir, relative_path)
@@ -129,6 +146,11 @@ def render_page(source_path: str, source_dir: str, target_dir: str, expect_versi
 
     for a in soup.select('a.hash-link'):
         a.decompose()
+
+    for selector, attr in [('[href]', 'href'), ('img', 'src')]:
+        for elem in soup.select(selector):
+            if elem[attr].startswith(('/cdk/api/v2/img/', '/cdk/api/v2/css/')):
+                copy_asset(source_dir, target_dir, elem[attr])
 
     rewrite_links(soup, relative_path)
     embed_dash_toc(soup)
