@@ -1,34 +1,26 @@
-SHELL 			:= /usr/bin/env bash
-.DEFAULT_GOAL 	:= docset
-export PATH 	:= $(shell pwd)/scripts:$(shell pwd)/.venv/bin:$(PATH)
+SHELL 			:= /usr/bin/env bash -euo pipefail
+.DEFAULT_GOAL	:= tgz
+export PATH		:= $(shell pwd)/.venv/bin:$(PATH)
 
 BUILD	:= .build/docset
 SRC		:= $(BUILD)/src
 DOCSET 	:= $(BUILD)/AWS-CDK.docset
 TGZ		:= $(BUILD)/AWS-CDK.tgz
-
 DOCUMENTS := $(DOCSET)/Contents/Resources/Documents
 
-STATIC_FILES := \
-	$(DOCSET)/icon.png \
-	$(DOCSET)/Contents/Info.plist
+.FORCE:
 
-.PHONY: clean clean-all venv static download html docset tgz
-clean:
+all: tgz
+venv: .build/.done-requirements
+clean: .FORCE
 	-rm -r $(TGZ) $(DOCSET)
-clean-all:
-	-rm -r .build
-venv: .venv/bin/activate .build/.done-requirements
-static: $(STATIC_FILES)
-download: $(SRC)/.done
-html: $(DOCSET)/.done
+clean/all: .FORCE
+	-rm -r .build .venv
+test/unit: venv .FORCE
+	python -m unittest discover ./scripts
+test: test/unit
 tgz: $(TGZ)
-docset:
-	$(MAKE) venv
-	$(MAKE) static
-	$(MAKE) download
-	$(MAKE) html
-	$(MAKE) tgz
+download: $(SRC)/.done
 
 .venv/bin/activate:
 	python3 -m venv .venv
@@ -38,7 +30,9 @@ docset:
 	pip3 install -q --disable-pip-version-check -r requirements.txt
 	@touch $@
 
-$(STATIC_FILES): $(DOCSET)/%: static/%
+STATIC_TARGETS := $(patsubst static/%, $(DOCSET)/%, $(shell find static -type f))
+
+$(STATIC_TARGETS): $(DOCSET)/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -55,18 +49,18 @@ $(DOCSET)/.done: 	$(SRC)/.done \
 		--expect-version $(shell cat $(BUILD)/cdk-version)
 	@touch $@
 
-$(TGZ):
+$(TGZ): $(DOCSET)/.done
 	cd $(dir $@) \
 	&& tar --exclude='.DS_Store' -czf $(notdir $@) $(patsubst %.tgz,%.docset,$(notdir $@))
 
-$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version .build/.done-requirements
+$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version venv
 	@mkdir -p $(BUILD)/src
 	./scripts/download-pages.py \
 		--target-dir $(SRC) \
 		--expect-version $(shell cat $(BUILD)/cdk-version)
 	@touch $@
 
-$(BUILD)/cdk-version: .build/.done-requirements
+$(BUILD)/cdk-version: ./scripts/get-current-online-version.py venv
 	@mkdir -p $(dir $@)
 	./scripts/get-current-online-version.py > $@
 
@@ -81,9 +75,3 @@ $(DOCUMENTS)/%.css: $(SRC)/%.css
 $(DOCUMENTS)/cdk-version: $(BUILD)/cdk-version
 	@mkdir -p $(dir $@)
 	cp $< $@
-
-.PHONY: test test/unit
-test/unit: .build/.done-requirements
-	python -m unittest discover ./scripts
-
-test: test/unit
