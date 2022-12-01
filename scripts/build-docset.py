@@ -21,25 +21,6 @@ class Entry:
     relative_path: str
 
 
-ENTRY_TYPE_PREFIX_MAPPING = {
-    'class': 'Class',
-    'interface': 'Interface',
-    'enum': 'Enum',
-}
-
-ENTRY_TYPE_SUFFIX_MAPPING = {
-    'module': 'Module',
-}
-
-
-def get_entry_type(title: str, default: str = 'Guide') -> str:
-    return (
-        ENTRY_TYPE_PREFIX_MAPPING.get(title.split(' ')[0].lower().strip())
-        or ENTRY_TYPE_SUFFIX_MAPPING.get(title.split(' ')[-1].lower().strip())
-        or default
-    )
-
-
 TABLE_OF_CONTENTS_MAPPING = [
     ('h2', None, None, 'Section'),
     ('h3', 'h2', 'Construct Props', 'Attribute'),
@@ -155,7 +136,7 @@ def render_page(source_path: str, source_dir: str, target_dir: str, expect_versi
     soup.select_one('html').insert(0, bs4.Comment(f'Online page at {urljoin(util.BASE_URL, relative_path)}'))
 
     page_title = soup.select_one('h1').text
-    entry_type = get_entry_type(page_title)
+    entry_type = util.get_entry_type(page_title)
 
     entry_title = get_entry_title(page_title, entry_type, relative_path)
 

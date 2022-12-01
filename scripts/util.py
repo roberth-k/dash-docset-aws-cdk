@@ -23,3 +23,23 @@ def load_bs4(data) -> bs4.BeautifulSoup:
         data = data.decode('utf8')
 
     return bs4.BeautifulSoup(data, 'lxml')
+
+
+
+ENTRY_TYPE_PREFIX_MAPPING = {
+    'class': 'Class',
+    'interface': 'Interface',
+    'enum': 'Enum',
+}
+
+ENTRY_TYPE_SUFFIX_MAPPING = {
+    'module': 'Module',
+}
+
+
+def get_entry_type(title: str, default: str = 'Guide') -> str:
+    return (
+            ENTRY_TYPE_PREFIX_MAPPING.get(title.split(' ')[0].lower().strip())
+            or ENTRY_TYPE_SUFFIX_MAPPING.get(title.split(' ')[-1].lower().strip())
+            or default
+    )
