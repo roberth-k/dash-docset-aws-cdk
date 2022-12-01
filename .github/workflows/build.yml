@@ -10,10 +10,16 @@ on:
     outputs:
       run_id:
         value: ${{ github.run_id }}
+  workflow_dispatch:
+    inputs:
+      build_docset:
+        default: false
+        type: boolean
+        description: When checked, build the docset after running tests.
 
 jobs:
-  test-and-build-docset:
-    name: Test and Build Docset
+  test:
+    name: Test
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -21,6 +27,21 @@ jobs:
         with:
           python-version: '3.10'
       - run: make test/unit
+
+  build:
+    if: |
+      success() && (
+        github.event_name == 'workflow_call' ||
+        inputs.build_docset == 'true'
+      )
+    name: Build
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - run: make
       - uses: actions/upload-artifact@v3
         with:

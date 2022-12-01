@@ -60,7 +60,7 @@ jobs:
 
   build:
     if: ${{ needs.should-publish.outputs.proceed == 'true' }}
-    name: Build
+    name: Build Docset
     needs: should-publish
     uses: ./.github/workflows/build.yml
 
