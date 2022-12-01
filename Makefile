@@ -45,7 +45,7 @@ $(STATIC_FILES): $(DOCSET)/%: static/%
 PNG_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.png'))
 CSS_TARGETS = $(patsubst $(SRC)/%, $(DOCUMENTS)/%, $(shell find $(SRC) -name '*.css'))
 
-$(DOCSET)/.done: $(SRC)/.done $(PNG_TARGETS) $(CSS_TARGETS) $(DOCUMENTS)/cdk-version
+$(DOCSET)/.done: $(SRC)/.done $(PNG_TARGETS) $(CSS_TARGETS) $(DOCUMENTS)/cdk-version .build/.done-requirements
 	@mkdir -p $(DOCUMENTS)
 	./scripts/build-docset.py \
 		--source-dir $(SRC) \
@@ -58,14 +58,14 @@ $(TGZ):
 	cd $(dir $@) \
 	&& tar --exclude='.DS_Store' -czf $(notdir $@) $(patsubst %.tgz,%.docset,$(notdir $@))
 
-$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version
+$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version .build/.done-requirements
 	@mkdir -p $(BUILD)/src
 	./scripts/download-pages.py \
 		--target-dir $(SRC) \
 		--expect-version $(shell cat $(BUILD)/cdk-version)
 	@touch $@
 
-$(BUILD)/cdk-version:
+$(BUILD)/cdk-version: .build/.done-requirements
 	@mkdir -p $(dir $@)
 	./scripts/get-current-online-version.py > $@
 

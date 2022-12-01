@@ -1,23 +1,83 @@
 name: Release
 
 on:
-  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      no_skip_when_current:
+        default: false
+        type: boolean
+        description: |
+          Set this to create a new release even if
+          there is one already for the current version
+          of the CDK.
 
 jobs:
+  should-release:
+    name: Should release?
+    runs-on: ubuntu-22.04
+    outputs:
+      proceed: ${{ steps.main.outputs.proceed == 'true' }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ inputs.no_skip_when_current }}" == "true" ]]; then
+            1>&2 echo "proceed!"
+            echo "proceed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          latest_release_tag=$( \
+            gh release view \
+              --repo=$GITHUB_REPOSITORY \
+              --json tagName \
+              | jq -r .tagName
+          )
+          
+          latest_release_cdk_version=$( \
+            echo $latest_release_tag \
+            | sed -En 's ^v([^-]+)-[0-9]+$ \1 p' \
+          )
+          
+          make .build/docset/cdk-version
+          
+          current_cdk_version=$(cat .build/docset/cdk-version)
+          
+          1>&2 echo "latest release tag: $latest_release_tag"
+          1>&2 echo "latest release cdk version: $latest_release_cdk_version"
+          1>&2 echo "current cdk version: $current_cdk_version"
+          
+          if [[ "$latest_release_cdk_version" != "$current_cdk_version" ]]; then
+            1>&2 echo "proceed!"
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          else
+            1>&2 echo "skip!"
+            echo "proceed=false" >> $GITHUB_OUTPUT
+          fi
+
   build:
+    if: ${{ needs.should-release.outputs.proceed == 'true' }}
+    name: Build
+    needs: should-release
     uses: ./.github/workflows/build.yml
 
   release:
     name: Release
+    needs: build
     runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: write
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - run: |
-          gh run download \
-            --repo=$GITHUB_ACTION_REPOSITORY \
-            ${{ jobs.build.outputs.run_id }} \
-            --name AWS-CDK.tgz
+      - uses: actions/download-artifact@v3
+        with:
+          name: AWS-CDK.tgz
       - run: |
           tar \
             --extract \
@@ -27,7 +87,7 @@ jobs:
       - run: |
           tag="v$(cat cdk-version)-$(date +%s)"
           gh release create \
-            --repo=$GITHUB_ACTION_REPOSITORY \
+            --repo=$GITHUB_REPOSITORY \
             --target=$GITHUB_SHA \
             --title=$tag \
             --notes="CDK $(cat cdk-version)" \
