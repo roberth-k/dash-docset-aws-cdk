@@ -114,7 +114,7 @@ def get_entry_title(page_title: str, entry_type: str, relative_path: str) -> str
         return page_title
 
 
-def process_page(source_path: str, source_dir: str, target_dir: str) -> Optional[Entry]:
+def render_page(source_path: str, source_dir: str, target_dir: str, expect_version: str) -> Optional[Entry]:
     relative_path = os.path.relpath(source_path, start=source_dir)
     target_path = os.path.join(target_dir, relative_path)
 
@@ -125,6 +125,9 @@ def process_page(source_path: str, source_dir: str, target_dir: str) -> Optional
 
     with open(source_path, 'r') as fp:
         soup = util.load_bs4(fp)
+
+    if (page_version := util.get_page_version(soup)) != expect_version:
+        raise RuntimeError(f'Page version is {page_version}; expected {expect_version}.')
 
     for script in soup.select('script'):
         script.decompose()
@@ -178,11 +181,13 @@ def main():
     args.add_argument('--source-dir', dest='source_dir', required=True)
     args.add_argument('--target-dir', dest='target_dir', required=True)
     args.add_argument('--index', dest='index_path', required=True)
+    args.add_argument('--expect-version', dest='expect_version', required=True)
     args = args.parse_args()
 
     source_dir: str = os.path.abspath(args.source_dir)
     target_dir: str = os.path.abspath(args.target_dir)
     index_path: str = os.path.abspath(args.index_path)
+    expect_version: str = args.expect_version
 
     if not os.path.exists(target_dir):
         raise RuntimeError('Target directory does not exist!')
@@ -192,9 +197,10 @@ def main():
     with Pool(processes=os.cpu_count()+1) as pool:
         index = pool.map(
             functools.partial(
-                process_page,
+                render_page,
                 source_dir=source_dir,
-                target_dir=target_dir),
+                target_dir=target_dir,
+                expect_version=expect_version),
             files,
             chunksize=1)
 

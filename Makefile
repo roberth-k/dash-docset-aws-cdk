@@ -50,7 +50,8 @@ $(DOCSET)/.done: $(SRC)/.done $(PNG_TARGETS) $(CSS_TARGETS) $(DOCUMENTS)/cdk-ver
 	./scripts/build-docset.py \
 		--source-dir $(SRC) \
 		--target-dir $(DOCUMENTS) \
-		--index $(DOCSET)/Contents/Resources/docSet.dsidx
+		--index $(DOCSET)/Contents/Resources/docSet.dsidx \
+		--expect-version $(shell cat $(BUILD)/cdk-version)
 	@touch $@
 
 $(TGZ):
