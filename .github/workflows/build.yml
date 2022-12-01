@@ -1,7 +1,9 @@
 name: Build
 
 on:
-  push: {}
+  push:
+    tags-ignore:
+      - '**'
   workflow_call:
     outputs:
       run_id: ${{ github.run_id }}
