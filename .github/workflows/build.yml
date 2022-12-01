@@ -12,8 +12,8 @@ on:
         value: ${{ github.run_id }}
 
 jobs:
-  build:
-    name: Build
+  test-and-build-docset:
+    name: Test and Build Docset
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3

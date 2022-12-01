@@ -1,4 +1,4 @@
-name: Release
+name: Publish
 
 on:
   schedule:
@@ -14,8 +14,8 @@ on:
           of the CDK.
 
 jobs:
-  should-release:
-    name: Should release?
+  should-publish:
+    name: Should publish?
     runs-on: ubuntu-22.04
     outputs:
       proceed: ${{ steps.main.outputs.proceed == 'true' }}
@@ -60,13 +60,13 @@ jobs:
           fi
 
   build:
-    if: ${{ needs.should-release.outputs.proceed == 'true' }}
+    if: ${{ needs.should-publish.outputs.proceed == 'true' }}
     name: Build
-    needs: should-release
+    needs: should-publish
     uses: ./.github/workflows/build.yml
 
-  release:
-    name: Release
+  publish:
+    name: Publish Release
     needs: build
     runs-on: ubuntu-22.04
     permissions:
