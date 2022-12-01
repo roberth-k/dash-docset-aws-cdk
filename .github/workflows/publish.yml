@@ -62,15 +62,15 @@ jobs:
             echo "proceed=false" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  docset:
     if: ${{ needs.should-publish.outputs.proceed == 'true' }}
-    name: Build Docset
+    name: Docset
     needs: should-publish
     uses: ./.github/workflows/docset.yml
 
-  publish:
-    name: Publish Release
-    needs: build
+  create-release:
+    name: Create Release
+    needs: docset
     runs-on: ubuntu-22.04
     permissions:
       actions: read
