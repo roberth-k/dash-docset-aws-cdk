@@ -34,12 +34,17 @@ ENTRY_TYPE_PREFIX_MAPPING = {
 
 ENTRY_TYPE_SUFFIX_MAPPING = {
     'module': 'Module',
+    'construct': 'Constructor',
 }
 
 
 def get_entry_type(title: str, default: str = 'Guide') -> str:
+    title = ''.join(c for c in title.lower() if c.isalnum() or c == ' ').strip()
+    first_word = title.split(' ')[0]
+    last_word = title.split(' ')[-1]
+
     return (
-            ENTRY_TYPE_PREFIX_MAPPING.get(title.split(' ')[0].lower().strip())
-            or ENTRY_TYPE_SUFFIX_MAPPING.get(title.split(' ')[-1].lower().strip())
-            or default
+        ENTRY_TYPE_SUFFIX_MAPPING.get(last_word)
+        or ENTRY_TYPE_PREFIX_MAPPING.get(first_word)
+        or default
     )

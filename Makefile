@@ -35,7 +35,7 @@ docset:
 
 .build/.done-requirements: .venv/bin/activate requirements.txt
 	@mkdir -p $(dir $@)
-	pip3 install -q -r requirements.txt
+	pip3 install -q --disable-pip-version-check -r requirements.txt
 	@touch $@
 
 $(STATIC_FILES): $(DOCSET)/%: static/%
@@ -80,3 +80,9 @@ $(DOCUMENTS)/%.css: $(SRC)/%.css
 $(DOCUMENTS)/cdk-version: $(BUILD)/cdk-version
 	@mkdir -p $(dir $@)
 	cp $< $@
+
+.PHONY: test test/unit
+test/unit: .build/.done-requirements
+	python -m unittest discover ./scripts
+
+test: test/unit
