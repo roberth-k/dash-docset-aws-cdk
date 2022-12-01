@@ -1,26 +1,32 @@
 SHELL 			:= /usr/bin/env bash
 .DEFAULT_GOAL 	:= docset
 export PATH 	:= $(shell pwd)/scripts:$(shell pwd)/.venv/bin:$(PATH)
-MAKEFLAGS		:= --no-print-directory
 
 BUILD	:= .build/docset
+SRC		:= $(BUILD)/src
 DOCSET 	:= $(BUILD)/AWS-CDK.docset
 TGZ		:= $(BUILD)/AWS-CDK.tgz
+
+DOCUMENTS := $(DOCSET)/Contents/Resources/Documents
 
 STATIC_FILES := \
 	$(DOCSET)/icon.png \
 	$(DOCSET)/Contents/Info.plist
 
-.PHONY: clean venv static html docset tgz
+.PHONY: clean clean-all venv static download html docset tgz
 clean:
+	-rm -r $(TGZ) $(DOCSET)
+clean-all:
 	-rm -r .build
 venv: .venv/bin/activate .build/.done-requirements
 static: $(STATIC_FILES)
-html: $(BUILD)/.done-make-html
+download: $(SRC)/.done
+html: $(DOCSET)/.done
 tgz: $(TGZ)
 docset:
 	$(MAKE) venv
 	$(MAKE) static
+	$(MAKE) download
 	$(MAKE) html
 	$(MAKE) tgz
 
@@ -32,7 +38,7 @@ docset:
 	pip3 install -q -r requirements.txt
 	@touch $@
 
-$(STATIC_FILES): $(DOCSET)/%:  static/%
+$(STATIC_FILES): $(DOCSET)/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -53,6 +59,13 @@ $(TGZ):
 	cd $(dir $@) \
 	&& tar --exclude='.DS_Store' -czf $(notdir $@) $(patsubst %.tgz,%.docset,$(notdir $@))
 
-.PHONY: get-current-online-version
-get-current-online-version:
-	@./scripts/get-current-online-version.py
+$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version
+	@mkdir -p $(BUILD)/src
+	./scripts/download-pages.py \
+		--target-dir $(SRC) \
+		--expect-version $(shell cat $(BUILD)/cdk-version)
+	@touch $@
+
+$(BUILD)/cdk-version:
+	@mkdir -p $(dir $@)
+	./scripts/get-current-online-version.py > $@

@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import requests
-import bs4
+import util
 
 
 def main():
-    response = requests.get('https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html')
-    response.raise_for_status()
-    soup = bs4.BeautifulSoup(response.text, 'lxml')
-    version = soup.select_one('header > a[href="/cdk/api/v2/versions.html"] > h3').text
+    page = util.download_file('/cdk/api/v2/docs/aws-construct-library.html')
+    soup = util.load_bs4(page.decode('utf8'))
+    version = util.get_page_version(soup)
     print(version)
 
 
