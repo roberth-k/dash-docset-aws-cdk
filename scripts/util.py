@@ -25,26 +25,29 @@ def load_bs4(data) -> bs4.BeautifulSoup:
     return bs4.BeautifulSoup(data, 'lxml')
 
 
-
-ENTRY_TYPE_PREFIX_MAPPING = {
-    'class': 'Class',
-    'interface': 'Interface',
-    'enum': 'Enum',
-}
-
-ENTRY_TYPE_SUFFIX_MAPPING = {
-    'module': 'Module',
-    'construct': 'Constructor',
-}
-
-
-def get_entry_type(title: str, default: str = 'Guide') -> str:
+def get_entry_type(title: str) -> str:
     title = ''.join(c for c in title.lower() if c.isalnum() or c == ' ').strip()
     first_word = title.split(' ')[0]
     last_word = title.split(' ')[-1]
 
-    return (
-        ENTRY_TYPE_SUFFIX_MAPPING.get(last_word)
-        or ENTRY_TYPE_PREFIX_MAPPING.get(first_word)
-        or default
-    )
+    match first_word, last_word:
+        case _, 'module':
+            return 'Module'
+        case 'class', 'construct' if title.startswith('class cfn'):
+            return 'Resource'  # L1 construct
+        case _, 'construct':
+            return 'Constructor'
+        case 'class', _:
+            return 'Class'
+        case 'enum', _:
+            return 'Enum'
+        case 'interface', _ if title.startswith('interface i'):
+            return 'Interface'
+        case 'interface', _ if title.startswith('interface cfn') and title.endswith('props'):
+            return 'Property'  # L1 construct props
+        case 'interface', _ if title.endswith('props'):
+            return 'Property'  # L2 construct props
+        case 'interface', _:
+            return 'Struct'
+        case _:
+            return 'Guide'
