@@ -2,7 +2,7 @@ SHELL 			:= /usr/bin/env bash -euo pipefail
 .DEFAULT_GOAL	:= tgz
 export PATH		:= $(shell pwd)/.venv/bin:$(PATH)
 
-BUILD	:= .build/docset
+BUILD	:= .build/latest
 SRC		:= $(BUILD)/src
 DOCSET 	:= $(BUILD)/AWS-CDK.docset
 TGZ		:= $(BUILD)/AWS-CDK.tgz

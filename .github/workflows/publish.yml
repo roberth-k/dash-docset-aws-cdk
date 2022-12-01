@@ -43,9 +43,9 @@ jobs:
             | sed -En 's ^v([^-]+)-[0-9]+$ \1 p' \
           )
           
-          make .build/docset/cdk-version
+          make .build/latest/cdk-version
           
-          current_cdk_version=$(cat .build/docset/cdk-version)
+          current_cdk_version=$(cat .build/latest/cdk-version)
           
           1>&2 echo "latest release tag: $latest_release_tag"
           1>&2 echo "latest release cdk version: $latest_release_cdk_version"

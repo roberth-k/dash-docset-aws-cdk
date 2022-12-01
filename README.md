@@ -35,4 +35,4 @@ make
 
 The build will use the currently published version of the AWS CDK API Reference.
 
-The docset will be available at `.build/docset/AWS-CDK.docset` and `.build/docset/AWS-CDK.tgz`. 
+The docset will be available at `.build/latest/AWS-CDK.docset` and `.build/latest/AWS-CDK.tgz`. 

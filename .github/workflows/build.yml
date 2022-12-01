@@ -25,4 +25,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: AWS-CDK.tgz
-          path: .build/docset/AWS-CDK.tgz
+          path: .build/latest/AWS-CDK.tgz
