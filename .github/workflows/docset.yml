@@ -10,12 +10,7 @@ on:
     outputs:
       run_id:
         value: ${{ github.run_id }}
-  workflow_dispatch:
-    inputs:
-      build_docset:
-        default: false
-        type: boolean
-        description: Build the docset after running tests.
+  workflow_dispatch: {}
 
 jobs:
   unit-test:
@@ -30,9 +25,7 @@ jobs:
       - run: make test/unit
 
   build:
-    if: |
-      (github.event.inputs.build_docset == '') ||
-      (github.event.inputs.build_docset == true)
+    if: github.event_name != 'push'
     name: Build
     runs-on: ubuntu-22.04
     needs: unit-test
