@@ -14,6 +14,7 @@ class TestUnit(unittest.TestCase):
             ('interface CfnAlertProps', 'Property'),
             ('class CfnAccount (construct)', 'Resource'),
             ('interface GatewayResponseProps', 'Property'),
+            ('interface IntegrationOptions', 'Struct'),
         ]
 
         for title, expect in test_cases:

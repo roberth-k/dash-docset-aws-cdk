@@ -1,5 +1,8 @@
+from typing import List, Tuple
+
 import bs4
 import cchardet
+import re
 import requests
 from urllib.parse import urljoin
 
@@ -25,36 +28,33 @@ def load_bs4(data) -> bs4.BeautifulSoup:
     return bs4.BeautifulSoup(data, 'lxml')
 
 
-def normalize_page_title(title: str) -> str:
-    return ''.join(c for c in title.lower() if c.isalnum() or c == ' ').strip()
-
-
 def get_entry_type(title: str) -> str:
-    title = normalize_page_title(title)
-    first_word = title.split(' ')[0]
-    last_word = title.split(' ')[-1]
+    # Strip special characters (such as the 🔹used by experimental constructs).
+    title = ''.join(c for c in title if c.isascii() or c == ' ').strip()
 
-    match first_word, last_word:
-        case _, 'module':
-            return 'Module'
-        case 'class', 'construct' if title.startswith('class cfn'):
-            return 'Resource'  # L1 construct
-        case _, 'construct':
-            return 'Constructor'
-        case 'class', _:
-            return 'Class'
-        case 'enum', _:
-            return 'Enum'
-        case 'interface', _ if title.startswith('interface i'):
-            return 'Interface'
-        case 'interface', _ if title.startswith('interface cfn') and title.endswith('props'):
-            return 'Property'  # L1 construct props
-        case 'interface', _ if title.endswith('props'):
-            return 'Property'  # L2 construct props
-        case 'interface', _:
-            return 'Struct'
-        case _:
-            return 'Guide'
+    if '_patterns' not in get_entry_type.__dict__:
+        get_entry_type._patterns = [
+            (re.compile(pattern), result)
+            for pattern, result in [
+                (r'^.* module$', 'Module'),
+                (r'^class Cfn.* \(construct\)$', 'Resource'),  # L1 construct
+                (r'^.* \(construct\)$', 'Constructor'),
+                (r'^class .*$', 'Class'),
+                (r'^enum .*$', 'Enum'),
+                (r'^interface I[A-Z].*$', 'Interface'),
+                (r'^interface Cfn.*Props$', 'Property'),  # L1 construct props
+                (r'^interface .*Props$', 'Property'),  # L2 construct props
+                (r'^interface .*$', 'Struct'),
+            ]
+        ]
+
+    patterns: List[Tuple[re.Pattern, str]] = get_entry_type._patterns
+
+    for pattern, result in patterns:
+        if pattern.match(title):
+            return result
+
+    return 'Guide'
 
 
 def get_entry_title(page_title: str, entry_type: str, relative_path: str) -> str:
