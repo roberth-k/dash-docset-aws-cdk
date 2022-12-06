@@ -55,5 +55,5 @@ jobs:
         with:
           name: AWS-CDK.tgz
       - env:
-          DOCSET_TGZ: ./AWS-CDK.tgz
+          ACCTEST_TGZ: ./AWS-CDK.tgz
         run: make test/acc

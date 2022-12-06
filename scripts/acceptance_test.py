@@ -1,3 +1,5 @@
+import sys
+
 import os
 import tarfile
 import unittest
@@ -9,7 +11,7 @@ class TestAcc(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        tgz_path = os.environ.get('DOCSET_TGZ', '../.build/latest/AWS-CDK.tgz')
+        tgz_path = os.environ.get('ACCTEST_TGZ', f'{sys.path[0]}/../.build/latest/AWS-CDK.tgz')
         if not tgz_path:
             raise RuntimeError('Expected environment variable DOCSET_TGZ.')
 

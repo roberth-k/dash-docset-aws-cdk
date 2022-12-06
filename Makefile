@@ -19,7 +19,7 @@ clean/all: .FORCE
 test/unit: venv .FORCE
 	python -m unittest discover ./scripts -k '*.TestUnit*' -v -p '*_test.py'
 test/acc: venv .FORCE
-	DOCSET_TGZ=$(TGZ) python -m unittest discover ./scripts -k '*.TestAcc*' -v -p '*_test.py'
+	python -m unittest discover ./scripts -k '*.TestAcc*' -v -p '*_test.py'
 tgz: $(TGZ)
 download: $(SRC)/.done
 
