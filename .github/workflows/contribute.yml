@@ -1,0 +1,113 @@
+name: Contribute
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        type: string
+
+jobs:
+  push:
+    name: Push
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      release_version: ${{ steps.set-env.outputs.release_version }}
+      pr_head: ${{ steps.push.outputs.pr_head }}
+    steps:
+      - name: Download release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download \
+            ${{ inputs.release_tag || github.ref_name }} \
+            --repo=$GITHUB_REPOSITORY \
+            --pattern=AWS-CDK.tgz \
+            --dir=/tmp
+      - name: Set environment variables
+        id: set-env
+        run: |
+          release_version=${{ inputs.release_tag || github.ref_name }}
+          docset_version=$(echo $release_version | sed -En 's ^v([0-9.]+)-([0-9]+) \1/\2 p')
+          target_branch="aws-cdk-$release_version"
+          
+          echo RELEASE_VERSION=$release_version >> $GITHUB_ENV
+          echo DOCSET_VERSION=$docset_version >> $GITHUB_ENV
+          echo TARGET_BRANCH=$target_branch >> $GITHUB_ENV
+          
+          echo release_version=$release_version >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v3
+        with:
+          repository: Kapeli/Dash-User-Contributions
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Check out target branch
+        run: |
+          git checkout -b ${TARGET_BRANCH}
+      - name: Place docset assets
+        run: |
+          cp /tmp/AWS-CDK.tgz docsets/AWS_CDK/
+          mkdir -p docsets/AWS_CDK/versions/${RELEASE_VERSION}
+          cp docsets/AWS_CDK/AWS-CDK.tgz docsets/AWS_CDK/versions/${RELEASE_VERSION}/AWS-CDK.tgz
+      - name: Update docset metadata
+        run: |
+          readonly tmp=$(mktemp)
+          cat docsets/AWS_CDK/docset.json \
+          | jq --arg release_version "$RELEASE_VERSION" \
+               --arg docset_version "$DOCSET_VERSION" \
+               --indent 4 \
+              '
+                  .version = $docset_version |
+                  .specific_versions =
+                  [{
+                    version: $docset_version,
+                    archive: ("versions/"+$release_version+"/AWS-CDK.tgz")
+                  }] +
+                  .specific_versions
+              ' \
+          > $tmp
+          mv $tmp docsets/AWS_CDK/docset.json
+      - name: Configure git
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh auth status
+          gh auth setup-git
+          git config --global user.email "$(gh api /user/public_emails | jq -r .[0].email)"
+          git config --global user.name "$(gh api /user | jq -r .name)"
+      - name: Push target branch
+        id: push
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          readonly gh_login=$(gh api /user | jq -r .login)
+          git add -A
+          git commit -m "AWS-CDK ${RELEASE_VERSION}"
+          git push \
+            "https://${gh_login}@github.com/${gh_login}/Dash-User-Contributions.git" \
+            "HEAD:${TARGET_BRANCH}"
+          echo "pr_head=${gh_login}:${TARGET_BRANCH}" >> $GITHUB_OUTPUT
+
+  pull_request:
+    name: Pull Request
+    needs: push
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          readonly release_version=${{ needs.push.outputs.release_version }}
+          readonly pr_head=${{ needs.push.outputs.pr_head }}
+          
+          gh pr create \
+            --repo=Kapeli/Dash-User-Contributions \
+            --base=master \
+            --head=${pr_head} \
+            --title="AWS-CDK ${release_version}" \
+            --body="This is an automated PR. Please report issues to https://github.com/roberth-k/dash-docset-aws-cdk."
