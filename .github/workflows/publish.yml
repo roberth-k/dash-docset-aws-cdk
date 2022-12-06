@@ -13,8 +13,8 @@ on:
           exists for the current version of the CDK.
 
 jobs:
-  should-publish:
-    name: Should publish?
+  should-proceed:
+    name: Should proceed?
     runs-on: ubuntu-22.04
     outputs:
       proceed: ${{ steps.main.outputs.proceed == 'true' }}
@@ -63,9 +63,9 @@ jobs:
           fi
 
   docset:
-    if: ${{ needs.should-publish.outputs.proceed == 'true' }}
+    if: ${{ needs.should-proceed.outputs.proceed == 'true' }}
     name: Docset
-    needs: should-publish
+    needs: should-proceed
     uses: ./.github/workflows/docset.yml
 
   create-release:
