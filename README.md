@@ -30,9 +30,11 @@ The docset was developed using the following:
 To build the docset, run:
 
 ```bash
+make test/unit
 make
+make test/acc
 ```
 
 The build will use the currently published version of the AWS CDK API Reference.
 
-The docset will be available at `.build/latest/AWS-CDK.docset` and `.build/latest/AWS-CDK.tgz`. 
+The docset will be available at `.build/latest/AWS-CDK.docset` and the archive at `.build/latest/AWS-CDK.tgz`. 

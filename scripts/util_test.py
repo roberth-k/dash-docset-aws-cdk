@@ -2,7 +2,7 @@ import unittest
 import util
 
 
-class Tests(unittest.TestCase):
+class TestUnit(unittest.TestCase):
     def test_get_entry_type(self):
         test_cases = [
             ('class CfnCertificate (construct)', 'Resource'),

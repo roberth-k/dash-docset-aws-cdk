@@ -18,8 +18,8 @@ on:
         description: Build the docset after running tests.
 
 jobs:
-  test:
-    name: Test
+  unit-test:
+    name: Unit Test
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
       (github.event.inputs.build_docset == true)
     name: Build
     runs-on: ubuntu-22.04
-    needs: test
+    needs: unit-test
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -47,3 +47,20 @@ jobs:
         with:
           name: AWS-CDK.tgz
           path: .build/latest/AWS-CDK.tgz
+
+  acceptance-test:
+    name: Acceptance Test
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: pip
+      - uses: actions/download-artifact@v3
+        with:
+          name: AWS-CDK.tgz
+      - env:
+          DOCSET_TGZ: ./AWS-CDK.tgz
+        run: make test/acc
