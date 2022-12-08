@@ -74,7 +74,7 @@ jobs:
           mv $tmp docsets/AWS_CDK/docset.json
       - name: Configure git
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           gh auth status
           gh auth setup-git
@@ -83,7 +83,7 @@ jobs:
       - name: Push target branch
         id: push
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           readonly gh_login=$(gh api /user | jq -r .login)
           git add -A
@@ -100,7 +100,7 @@ jobs:
     steps:
       - name: Create pull request
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           readonly release_version=${{ needs.push.outputs.release_version }}
           readonly pr_head=${{ needs.push.outputs.pr_head }}

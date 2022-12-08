@@ -74,20 +74,24 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       actions: read
-      contents: write
+      contents: read
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: AWS-CDK.tgz
-      - run: |
+      - name: Extract docset version
+        run: |
           tar \
             --extract \
             --file=AWS-CDK.tgz \
             --strip-components=4 \
             AWS-CDK.docset/Contents/Resources/Documents/cdk-version
-      - run: |
+      - name: Create new release
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
           tag="v$(cat cdk-version)-$(date +%s)"
           gh release create \
             --repo=$GITHUB_REPOSITORY \
