@@ -1,14 +1,12 @@
 from typing import List, Tuple
 
 import bs4
-import cchardet
 import re
 import requests
 from urllib.parse import urljoin
 
 BASE_URL = 'https://docs.aws.amazon.com'
 REQUESTS_SESSION = requests.Session()
-_cchardet = cchardet  # Prevent optimizer from removing the import.
 
 
 def download_file(path: str) -> bytes:
