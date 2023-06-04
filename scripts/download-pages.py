@@ -40,6 +40,7 @@ def main():
     files.add('/cdk/api/v2/img/python32.png')
     files.add('/cdk/api/v2/img/typescript32.png')
     files.add('/cdk/api/v2/img/favicon-32x32.png')
+    files.add('/cdk/api/v2/img/cfn--resources-stable-success.svg')
     files.add('/cdk/api/v2/img/cdk--constructs-experimental-important.svg')
     files.add('/cdk/api/v2/img/experimental-important.svg')
     files.add('/cdk/api/v2/img/cdk--constructs-developer--preview-informational.svg')
