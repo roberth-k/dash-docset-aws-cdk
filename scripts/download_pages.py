@@ -1,35 +1,36 @@
 #!/usr/bin/env python
 
 import argparse
+import dataclasses
 import functools
 import os
 from multiprocessing.pool import ThreadPool
+from typing import Callable
 
 import util
 
 
-def download(link: str, target_dir: str):
-    target_path = os.path.join(target_dir, link.lstrip('/'))
-    if os.path.exists(target_path):
-        return
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+@dataclasses.dataclass
+class SourceFile:
+    relative_path: str
+    data: bytes
+
+
+def download(link: str, callback: Callable[[SourceFile], None]):
     response = util.download_file(link)
-    with open(target_path, 'wb') as fp:
-        fp.write(response)
-    print(target_path)
+    source_file = SourceFile(
+        relative_path=link.lstrip('/'),
+        data=response)
+    callback(source_file)
+    print(source_file)
 
 
-def main():
-    args = argparse.ArgumentParser()
-    args.add_argument('--expect-version', dest='expect_version', required=True)
-    args.add_argument('--target-dir', dest='target_dir', required=True)
-    args = args.parse_args()
-
+def run(expect_version: str, callback: Callable[[SourceFile], None]):
     data = util.download_file('/cdk/api/v2/docs/aws-construct-library.html')
     soup = util.load_bs4(data)
 
-    if (page_version := util.get_page_version(soup)) != args.expect_version:
-        raise RuntimeError(f'Page version is {page_version}; expected {args.expect_version}.')
+    if (page_version := util.get_page_version(soup)) != expect_version:
+        raise RuntimeError(f'Page version is {page_version}; expected {expect_version}.')
 
     files = {a['href'] for a in soup.select('a.navItem')}
     files.add('/cdk/api/v2/css/default.min.css')
@@ -51,7 +52,25 @@ def main():
     files.add('/cdk/api/v2/img/maven-badge.svg')
 
     with ThreadPool(processes=os.cpu_count()*4) as thread_pool:
-        thread_pool.map(functools.partial(download, target_dir=args.target_dir), files)
+        thread_pool.map(functools.partial(download, callback=callback), files)
+
+
+def main():
+    args = argparse.ArgumentParser()
+    args.add_argument('--expect-version', dest='expect_version', required=True)
+    args.add_argument('--target-dir', dest='target_dir', required=True)
+    args = args.parse_args()
+
+    def callback(source_file: SourceFile):
+        target_path = os.path.join(args.target_dir, source_file.relative_path)
+        if os.path.exists(target_path):
+            return
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        with open(target_path, 'wb') as fp:
+            fp.write(source_file.data)
+
+    run(expect_version=args.expect_version,
+        callback=callback)
 
 
 if __name__ == '__main__':
