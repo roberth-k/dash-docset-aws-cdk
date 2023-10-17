@@ -39,11 +39,11 @@ $(STATIC_TARGETS): $(DOCSET)/%: static/%
 
 $(DOCSET)/.done: 	$(SRC)/.done \
 					$(DOCUMENTS)/cdk-version \
-					./scripts/build-docset.py \
+					./scripts/build_docset.py \
 					$(STATIC_TARGETS) \
 					venv
 	@mkdir -p $(DOCUMENTS)
-	./scripts/build-docset.py \
+	./scripts/build_docset.py \
 		--source-dir $(SRC) \
 		--target-dir $(DOCUMENTS) \
 		--index $(DOCSET)/Contents/Resources/docSet.dsidx \
@@ -54,16 +54,16 @@ $(TGZ): $(DOCSET)/.done
 	cd $(dir $@) \
 	&& tar --exclude='.DS_Store' -czf $(notdir $@) $(patsubst %.tgz,%.docset,$(notdir $@))
 
-$(SRC)/.done: ./scripts/download-pages.py $(BUILD)/cdk-version venv
+$(SRC)/.done: ./scripts/download_pages.py $(BUILD)/cdk-version venv
 	@mkdir -p $(BUILD)/src
-	./scripts/download-pages.py \
+	./scripts/download_pages.py \
 		--target-dir $(SRC) \
 		--expect-version $(shell cat $(BUILD)/cdk-version)
 	@touch $@
 
-$(BUILD)/cdk-version: ./scripts/get-current-online-version.py venv
+$(BUILD)/cdk-version: ./scripts/get_current_online_version.py venv
 	@mkdir -p $(dir $@)
-	./scripts/get-current-online-version.py > $@
+	./scripts/get_current_online_version.py > $@
 
 $(DOCUMENTS)/%.png: $(SRC)/%.png
 	@mkdir -p $(dir $@)
